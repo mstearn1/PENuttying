@@ -64,7 +64,7 @@ benchmark_df = pd.DataFrame({
 })
 
 # Plot benchmark vs user
-st.subheader("📈 Benchmark Comparison")
+st.subheader("Benchmark Comparison")
 fig, ax = plt.subplots(figsize=(10, 6))
 sns.histplot(data=benchmark_df, x="Survival Score", hue="Outcome", multiple="stack", bins=30, palette="Set2", ax=ax)
 ax.axvline(survival_score, color='black', linestyle='--', label='Your Score')
@@ -72,4 +72,4 @@ ax.legend()
 ax.set_title("Survival Score Distribution with Your Brand Overlay")
 st.pyplot(fig)
 
-st.write("\n\n📌 **Interpretation Tip:** If your score is left of the majority 'Success' cluster, reevaluate your burn, SKU strategy, or ops reliability.")
+st.write("**Interpretation Tip:** If your score is left of the majority 'Success' cluster, reevaluate your burn, SKU strategy, or ops reliability.")
