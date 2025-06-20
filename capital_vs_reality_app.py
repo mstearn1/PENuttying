@@ -4,9 +4,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Streamlit page configuration
 st.set_page_config(page_title="CPG Investment Analyzer", layout="wide")
 st.title("🧃 CPG Investment Analyzer – Predictive Success Dashboard")
 
+# Sidebar Inputs
 st.sidebar.header("🔧 Input Your Brand's Parameters")
 
 gross_margin = st.sidebar.slider("Gross Margin at Launch (%)", 10, 90, 45)
@@ -16,17 +18,16 @@ ops_failure = st.sidebar.checkbox("Simulate Operational Failure", value=False)
 cash_burn = st.sidebar.number_input("Monthly Cash Burn ($K)", min_value=10, max_value=2000, value=250)
 runway_months = st.sidebar.number_input("Cash Runway (Months)", min_value=1, max_value=60, value=12)
 
+# Convert brand strength label to numerical score
 brand_strength_scores = {"Weak": 10, "Average": 20, "Strong": 30, "Celebrity": 40}
-brand_strength = brand_strength_scores[brand_strength_label]
+brand_strength = brand_strength_scores.get(brand_strength_label, 20)
 
 # Calculate survival score
 survival_score = gross_margin + brand_strength - (sku_count * 0.5) - (20 if ops_failure else 0)
-
-# Adjust score based on runway vs burn risk
 burn_risk = (cash_burn / 1000) * (12 / max(runway_months, 1))
-survival_score -= min(burn_risk * 2, 20)  # Penalize for short runway and high burn
+survival_score -= min(burn_risk * 2, 20)
 
-# Classify outcome
+# Determine outcome based on survival score
 if survival_score >= 60:
     status = "✅ Likely to Succeed"
 elif survival_score >= 40:
@@ -34,11 +35,12 @@ elif survival_score >= 40:
 else:
     status = "❌ Likely to Fail"
 
+# Display Metrics
 st.subheader("📊 Investment Success Prediction")
 st.metric("Survival Score", f"{survival_score:.1f}", help="Score factoring margin, brand, SKUs, ops, and cash dynamics")
 st.subheader(f"Outcome: {status}")
 
-# Simulate benchmark dataset
+# Simulate Benchmark Dataset
 np.random.seed(42)
 n_samples = 1000
 gross_margins = np.random.uniform(20, 80, n_samples)
@@ -63,8 +65,8 @@ benchmark_df = pd.DataFrame({
     "Outcome": outcomes
 })
 
-# Plot benchmark vs user
-st.subheader("Benchmark Comparison")
+# Create Benchmark Plot
+st.subheader("📈 Benchmark Comparison")
 fig, ax = plt.subplots(figsize=(10, 6))
 sns.histplot(data=benchmark_df, x="Survival Score", hue="Outcome", multiple="stack", bins=30, palette="Set2", ax=ax)
 ax.axvline(survival_score, color='black', linestyle='--', label='Your Score')
@@ -72,4 +74,4 @@ ax.legend()
 ax.set_title("Survival Score Distribution with Your Brand Overlay")
 st.pyplot(fig)
 
-st.write("**Interpretation Tip:** If your score is left of the majority 'Success' cluster, reevaluate your burn, SKU strategy, or ops reliability.")
+st.write("\n\n📌 **Interpretation Tip:** If your score is left of the majority 'Success' cluster, reevaluate your burn, SKU strategy, or ops reliability.")
