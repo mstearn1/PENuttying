@@ -36,6 +36,7 @@ elif module == "Forecasting Engine":
     churn_rate = st.slider("Monthly Churn Rate (%)", 0.0, 20.0, 5.0)
     fixed_burn = st.number_input("Monthly Fixed Cash Burn ($)", value=100000.0)
     variable_burn_per_customer = st.number_input("Variable Burn per Customer ($)", value=5.0)
+    slotting_fee = st.number_input("Slotting Fee (One-Time Sunk Cost) ($)", value=50000.0)
     optimism_bias = st.checkbox("Include Overconfidence Bias", value=True)
 
     potential_customers = (tam * 1000) / cac * (conversion_rate / 100)
@@ -47,6 +48,7 @@ elif module == "Forecasting Engine":
 
     forecast_revenue = forecast_customers * avg_price
     revenue_per_point = forecast_revenue / distribution_points if distribution_points else 0
+    weekly_sales_per_point = (forecast_revenue / 4) / distribution_points if distribution_points else 0
 
     variable_burn = forecast_customers * variable_burn_per_customer
     total_burn = fixed_burn + variable_burn
@@ -55,53 +57,54 @@ elif module == "Forecasting Engine":
     st.metric("Forecasted Active Customers", f"{forecast_customers:,.0f}")
     st.metric("Forecasted Monthly Revenue", f"${forecast_revenue:,.0f}")
     st.metric("Revenue per Distribution Point", f"${revenue_per_point:,.2f}")
+    st.metric("Weekly Sales per Unit (per Distribution Point)", f"${weekly_sales_per_point:,.2f}")
     st.metric("Total Monthly Cash Burn", f"${total_burn:,.0f}")
+    st.metric("Slotting Fee (One-Time)", f"${slotting_fee:,.0f}")
 
     if breakeven_diff >= 0:
         st.success(f"✅ Monthly Breakeven Achieved with ${breakeven_diff:,.0f} Surplus")
     else:
         st.error(f"❌ Monthly Breakeven Missed by ${abs(breakeven_diff):,.0f}")
 
-# CPG Investment Analyzer with Multi-Brand Comparison
+# CPG Investment Analyzer
 elif module == "CPG Investment Analyzer":
     st.header("🧃 CPG Investment Analyzer – Path to Success or Failure")
+    gross_margin = st.slider("Gross Margin at Launch (%)", 10, 90, 45)
+    channel = st.selectbox("Primary Sales Channel", ["DTC", "Retail", "Amazon", "Hybrid"])
+    brand_strength = st.select_slider("Brand Strength", ["Weak", "Average", "Strong", "Celebrity"])
+    sku_count = st.slider("Number of SKUs", 1, 50, 10)
+    simulate_failure = st.checkbox("Simulate Operational Failure")
 
-    st.subheader("Enter Brand Data")
-    num_brands = st.number_input("How many brands do you want to compare?", min_value=1, max_value=5, value=1)
+    score = gross_margin + (10 if brand_strength == "Strong" else 20 if brand_strength == "Celebrity" else 0)
+    score -= sku_count * 0.5
+    if simulate_failure:
+        score -= 20
 
-    all_results = []
+    if score >= 60:
+        status = "✅ Likely to Succeed"
+    elif score >= 40:
+        status = "⚠️ At Risk – Monitor Closely"
+    else:
+        status = "❌ Likely to Fail"
 
-    for i in range(num_brands):
-        st.markdown(f"### Brand {i+1}")
-        gross_margin = st.slider(f"Gross Margin at Launch (%) – Brand {i+1}", 10, 90, 45, key=f"gm_{i}")
-        channel = st.selectbox(f"Primary Sales Channel – Brand {i+1}", ["DTC", "Retail", "Amazon", "Hybrid"], key=f"channel_{i}")
-        brand_strength = st.select_slider(f"Brand Strength – Brand {i+1}", ["Weak", "Average", "Strong", "Celebrity"], key=f"strength_{i}")
-        sku_count = st.slider(f"Number of SKUs – Brand {i+1}", 1, 50, 10, key=f"sku_{i}")
-        simulate_failure = st.checkbox(f"Simulate Operational Failure – Brand {i+1}", key=f"fail_{i}")
+    st.metric("Survival Score", f"{score:.1f}")
+    st.subheader(f"Outcome: {status}")
 
-        score = gross_margin + (10 if brand_strength == "Strong" else 20 if brand_strength == "Celebrity" else 0)
-        score -= sku_count * 0.5
-        if simulate_failure:
-            score -= 20
+    # Simulate simple score distribution for native visualization
+    np.random.seed(42)
+    sim_scores = np.random.normal(loc=50, scale=15, size=1000)
+    score_df = pd.DataFrame(sim_scores, columns=["Survival Score"])
 
+    def categorize(score):
         if score >= 60:
-            status = "✅ Likely to Succeed"
+            return "Likely to Succeed"
         elif score >= 40:
-            status = "⚠️ At Risk – Monitor Closely"
+            return "At Risk"
         else:
-            status = "❌ Likely to Fail"
+            return "Likely to Fail"
 
-        all_results.append({
-            "Brand": f"Brand {i+1}",
-            "Survival Score": round(score, 1),
-            "Outcome": status
-        })
+    score_df["Outcome"] = score_df["Survival Score"].apply(categorize)
+    score_df["Your Brand"] = score_df["Survival Score"].apply(lambda x: "Your Score" if abs(x - score) < 0.5 else "Other")
 
-    result_df = pd.DataFrame(all_results)
-    st.subheader("📋 Multi-Brand Results")
-    st.dataframe(result_df.set_index("Brand"))
-
-    st.subheader("📊 Outcome Distribution")
-    outcome_counts = result_df["Outcome"].value_counts().reset_index()
-    outcome_counts.columns = ["Outcome", "Count"]
-    st.bar_chart(outcome_counts.set_index("Outcome"))
+    bin_counts = score_df.groupby("Outcome").size().reset_index(name="Count")
+    st.bar_chart(bin_counts.set_index("Outcome"))
