@@ -2,14 +2,6 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 
-# Optional: safely try importing matplotlib for local dev environments
-try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    plotting_available = True
-except ModuleNotFoundError:
-    plotting_available = False
-
 st.set_page_config(page_title="Capital vs Reality Interactive Model", layout="wide")
 st.title("Capital vs Reality: Interactive Diagnostic Engine")
 
@@ -74,18 +66,22 @@ elif module == "CPG Investment Analyzer":
     st.metric("Survival Score", f"{score:.1f}")
     st.subheader(f"Outcome: {status}")
 
-    # Optional plotting only if available
-    if plotting_available:
-        st.subheader("📊 Score Benchmark (Simulated)")
-        np.random.seed(42)
-        sim_scores = np.random.normal(loc=50, scale=15, size=1000)
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        fig, ax = plt.subplots()
-        sns.histplot(sim_scores, bins=30, color='skyblue', kde=True, ax=ax)
-        ax.axvline(score, color='red', linestyle='--', label='Your Score')
-        ax.set_title("Simulated Score Distribution")
-        ax.legend()
-        st.pyplot(fig)
-    else:
-        st.info("Plotting not available in this environment. Please install matplotlib and seaborn locally to enable visuals.")
+    # Simulate simple score distribution for native visualization
+    np.random.seed(42)
+    sim_scores = np.random.normal(loc=50, scale=15, size=1000)
+    score_df = pd.DataFrame(sim_scores, columns=["Survival Score"])
+
+    # Bin scores into categories
+    def categorize(score):
+        if score >= 60:
+            return "Likely to Succeed"
+        elif score >= 40:
+            return "At Risk"
+        else:
+            return "Likely to Fail"
+
+    score_df["Outcome"] = score_df["Survival Score"].apply(categorize)
+    score_df["Your Brand"] = score_df["Survival Score"].apply(lambda x: "Your Score" if abs(x - score) < 0.5 else "Other")
+
+    bin_counts = score_df.groupby("Outcome").size().reset_index(name="Count")
+    st.bar_chart(bin_counts.set_index("Outcome"))
