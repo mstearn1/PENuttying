@@ -89,8 +89,3 @@ elif module == "CPG Investment Analyzer":
         st.pyplot(fig)
     else:
         st.info("Plotting not available in this environment. Please install matplotlib and seaborn locally to enable visuals.")
-
-ax.set_title("Survival Score Distribution with Your Brand Overlay")
-st.pyplot(fig)
-
-st.write("\n\n📌 **Interpretation Tip:** If your score is left of the majority 'Success' cluster, reevaluate your burn, SKU strategy, or ops reliability.")
