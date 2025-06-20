@@ -1,3 +1,47 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+
+st.set_page_config(page_title="Capital vs Reality Interactive Model", layout="wide")
+st.title("Capital vs Reality: Interactive Diagnostic Engine")
+
+# Sidebar for module selection
+st.sidebar.title("Explore Modules")
+module = st.sidebar.radio("Select Module", ["Talent Pipeline Simulator", "Forecasting Engine", "CPG Investment Analyzer"])
+
+# Talent Pipeline Simulator
+if module == "Talent Pipeline Simulator":
+    st.header("🧠 Talent Pipeline Simulator – PE/IB Recruitment and Performance")
+    ivy_pct = st.slider("Percent of Hires from Ivy League", 0, 100, 80)
+    ops_exp_pct = st.slider("Percent of Hires with Ops Experience", 0, 100, 10)
+    conversion_rate = st.slider("Analyst-to-Associate Conversion Rate (%)", 0, 100, 60)
+    embed_ops_partner = st.checkbox("Embed Operating Partner in Deal Teams", value=False)
+
+    irr_base = 12
+    irr = irr_base + (ops_exp_pct * 0.05) - ((ivy_pct - 50) * 0.02)
+    if embed_ops_partner:
+        irr += 3
+
+    st.metric("Estimated Fund IRR", f"{irr:.2f}%")
+
+# Forecasting Engine
+elif module == "Forecasting Engine":
+    st.header("📈 Forecasting Engine – Building and Breaking Models")
+    tam = st.number_input("Total Addressable Market ($M)", value=500)
+    cac = st.number_input("Customer Acquisition Cost ($)", value=30.0)
+    conversion_rate = st.slider("Conversion Rate (%)", 0.1, 10.0, 2.0)
+    churn_rate = st.slider("Monthly Churn Rate (%)", 0.0, 20.0, 5.0)
+    optimism_bias = st.checkbox("Include Overconfidence Bias", value=True)
+
+    base_customers = (tam * 1000) / cac * (conversion_rate / 100)
+    churn_adjustment = base_customers * (churn_rate / 100)
+    forecast_customers = base_customers - churn_adjustment
+
+    if optimism_bias:
+        forecast_customers *= 1.2
+
+    st.metric("Forecasted Active Customers", f"{forecast_customers:,.0f}")
+
 # CPG Investment Analyzer with Multi-Brand Comparison
 elif module == "CPG Investment Analyzer":
     st.header("🧃 CPG Investment Analyzer – Path to Success or Failure")
