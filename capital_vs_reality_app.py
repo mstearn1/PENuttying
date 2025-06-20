@@ -66,45 +66,46 @@ elif module == "Forecasting Engine":
     else:
         st.error(f"❌ Monthly Breakeven Missed by ${abs(breakeven_diff):,.0f}")
 
-# CPG Investment Analyzer
+# CPG Investment Analyzer with Multi-Brand Comparison
 elif module == "CPG Investment Analyzer":
     st.header("🧃 CPG Investment Analyzer – Path to Success or Failure")
-    gross_margin = st.slider("Gross Margin at Launch (%)", 10, 90, 45)
-    channel = st.selectbox("Primary Sales Channel", ["DTC", "Retail", "Amazon", "Hybrid"])
-    brand_strength = st.select_slider("Brand Strength", ["Weak", "Average", "Strong", "Celebrity"])
-    sku_count = st.slider("Number of SKUs", 1, 50, 10)
-    simulate_failure = st.checkbox("Simulate Operational Failure")
 
-    score = gross_margin + (10 if brand_strength == "Strong" else 20 if brand_strength == "Celebrity" else 0)
-    score -= sku_count * 0.5
-    if simulate_failure:
-        score -= 20
+    st.subheader("Enter Brand Data")
+    num_brands = st.number_input("How many brands do you want to compare?", min_value=1, max_value=5, value=1)
 
-    if score >= 60:
-        status = "✅ Likely to Succeed"
-    elif score >= 40:
-        status = "⚠️ At Risk – Monitor Closely"
-    else:
-        status = "❌ Likely to Fail"
+    all_results = []
 
-    st.metric("Survival Score", f"{score:.1f}")
-    st.subheader(f"Outcome: {status}")
+    for i in range(num_brands):
+        st.markdown(f"### Brand {i+1}")
+        gross_margin = st.slider(f"Gross Margin at Launch (%) – Brand {i+1}", 10, 90, 45, key=f"gm_{i}")
+        channel = st.selectbox(f"Primary Sales Channel – Brand {i+1}", ["DTC", "Retail", "Amazon", "Hybrid"], key=f"channel_{i}")
+        brand_strength = st.select_slider(f"Brand Strength – Brand {i+1}", ["Weak", "Average", "Strong", "Celebrity"], key=f"strength_{i}")
+        sku_count = st.slider(f"Number of SKUs – Brand {i+1}", 1, 50, 10, key=f"sku_{i}")
+        simulate_failure = st.checkbox(f"Simulate Operational Failure – Brand {i+1}", key=f"fail_{i}")
 
-    # Simulate simple score distribution for native visualization
-    np.random.seed(42)
-    sim_scores = np.random.normal(loc=50, scale=15, size=1000)
-    score_df = pd.DataFrame(sim_scores, columns=["Survival Score"])
+        score = gross_margin + (10 if brand_strength == "Strong" else 20 if brand_strength == "Celebrity" else 0)
+        score -= sku_count * 0.5
+        if simulate_failure:
+            score -= 20
 
-    def categorize(score):
         if score >= 60:
-            return "Likely to Succeed"
+            status = "✅ Likely to Succeed"
         elif score >= 40:
-            return "At Risk"
+            status = "⚠️ At Risk – Monitor Closely"
         else:
-            return "Likely to Fail"
+            status = "❌ Likely to Fail"
 
-    score_df["Outcome"] = score_df["Survival Score"].apply(categorize)
-    score_df["Your Brand"] = score_df["Survival Score"].apply(lambda x: "Your Score" if abs(x - score) < 0.5 else "Other")
+        all_results.append({
+            "Brand": f"Brand {i+1}",
+            "Survival Score": round(score, 1),
+            "Outcome": status
+        })
 
-    bin_counts = score_df.groupby("Outcome").size().reset_index(name="Count")
-    st.bar_chart(bin_counts.set_index("Outcome"))
+    result_df = pd.DataFrame(all_results)
+    st.subheader("📋 Multi-Brand Results")
+    st.dataframe(result_df.set_index("Brand"))
+
+    st.subheader("📊 Outcome Distribution")
+    outcome_counts = result_df["Outcome"].value_counts().reset_index()
+    outcome_counts.columns = ["Outcome", "Count"]
+    st.bar_chart(outcome_counts.set_index("Outcome"))
